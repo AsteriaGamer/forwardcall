@@ -17,6 +17,7 @@ func NewHandler(services *service.Service) *Handler {
 }
 
 func (h *Handler) InitRoutes(mode string) *gin.Engine {
+
 	switch mode {
 	case "dev":
 		gin.SetMode(gin.DebugMode)
@@ -30,7 +31,8 @@ func (h *Handler) InitRoutes(mode string) *gin.Engine {
 
 	router := gin.New()
 
-	router.LoadHTMLFiles(listTemplates("templates/")...)
+	router.Static("/assets", "./public/assets")
+	router.LoadHTMLFiles(listTemplates("public/view")...)
 
 	// Main page with login panel
 	router.GET("/", h.LoginPage)
