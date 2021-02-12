@@ -27,7 +27,7 @@ func main() {
 	handlers := handler.NewHandler(services)
 
 	srv := new(forwardcall.Server)
-	if err := srv.Run(viper.GetString("port"), handlers.InitRoutes(viper.GetString("mode"))); err != nil {
+	if err := srv.Run(viper.GetString("port"), handlers.InitRoutes(viper.GetString("mode"), viper.GetString("session_key"))); err != nil {
 		logrus.Fatalf("Error occurred while running http server: %s", err.Error())
 	}
 }

@@ -1,3 +1,4 @@
-port: "8080"
+port: "80"
 database: "database/database.db"
 mode: "dev"
+session_key: "FGL0t8M9T8XMIZi?fpuR50Hz"

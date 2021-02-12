@@ -13,6 +13,15 @@ func NewAuthRepository(db *sqlx.DB) *AuthRepository {
 	return &AuthRepository{db: db}
 }
 
-func (r *AuthRepository) LoginUser(user entity.User) (int, error) {
-	return 0, nil
+/*
+	GetUser(username, password string) (entity.User, error)
+	Функция обращается к БД и получает данные пользователя, по заданным логину и паролю.
+	В ответ возвращается объект пользователя и ошибка.
+*/
+func (r *AuthRepository) GetUser(username string) (entity.User, error) {
+	var user entity.User
+	query := "SELECT id, username, password FROM users WHERE username=$1"
+	err := r.db.Get(&user, query, username)
+
+	return user, err
 }

@@ -6,7 +6,7 @@ import (
 )
 
 type Authorization interface {
-	LoginUser(user entity.User) (int, error)
+	GetUser(username string) (entity.User, error)
 }
 
 type ScheduleList interface {

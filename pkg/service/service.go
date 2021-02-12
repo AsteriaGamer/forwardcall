@@ -1,12 +1,11 @@
 package service
 
 import (
-	"forwardcall/pkg/entity"
 	"forwardcall/pkg/repository"
 )
 
 type Authorization interface {
-	LoginUser(user entity.User) (int, error)
+	AuthUser(username, password string) (string, error)
 }
 
 type ScheduleList interface {

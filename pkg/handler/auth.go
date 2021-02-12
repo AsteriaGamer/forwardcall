@@ -2,34 +2,56 @@ package handler
 
 import (
 	"forwardcall/pkg/entity"
-	"forwardcall/pkg/utils"
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 	"net/http"
 )
 
 func (h *Handler) SignIn(c *gin.Context) {
+	session := sessions.Default(c)
+
+	// Структура entity.User принимает и валидирует входные данные
 	var input entity.User
 
+	// Передача данных из запроса в структуру User и их валидация
 	if err := c.ShouldBind(&input); err != nil {
-		//input.GetError(err.(validator.ValidationErrors))
-		c.String(http.StatusBadRequest, "Error message: %s", err.(validator.ValidationErrors).Translate(utils.Trans))
+		c.JSON(http.StatusBadRequest, gin.H{"status": "bad request"})
 		return
 	}
 
-	if input.Username != "root" || input.Password != "q1q2q3" {
+	// Аутентификация пользователя
+	username, err := h.services.Authorization.AuthUser(input.Username, input.Password)
+	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"status": "you are logged in"})
+	session.Set("username", username)
+	session.Set("authorization", true)
 
-	// Вызов метода из сервиса
-	//h.services.Authorization.LoginUser(input)
+	if err = session.Save(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status": "you are logged in",
+	})
 }
 
-func (h *Handler) LoginPage(c *gin.Context) {
-	c.HTML(http.StatusOK, "index.html", gin.H{
-		"title": "ForwardCall",
-	})
+func (h *Handler) SignOut(c *gin.Context) {
+	session := sessions.Default(c)
+
+	username := session.Get("username")
+	if username == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid session token"})
+		return
+	}
+	session.Delete("username")
+	if err := session.Save(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully logged out"})
 }

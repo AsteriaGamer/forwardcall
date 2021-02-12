@@ -2,6 +2,8 @@ package handler
 
 import (
 	"forwardcall/pkg/service"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/memstore"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"os"
@@ -16,8 +18,9 @@ func NewHandler(services *service.Service) *Handler {
 	return &Handler{services: services}
 }
 
-func (h *Handler) InitRoutes(mode string) *gin.Engine {
+func (h *Handler) InitRoutes(mode string, sessionKey string) *gin.Engine {
 
+	// Выбор режима запуска приложения
 	switch mode {
 	case "dev":
 		gin.SetMode(gin.DebugMode)
@@ -29,17 +32,28 @@ func (h *Handler) InitRoutes(mode string) *gin.Engine {
 		logrus.Errorf("Unexpected run mode, please check mode variable in config.")
 	}
 
+	// Создание нового экземпляра фреймворка
 	router := gin.New()
 
+	// Регистрация пути "/assets" в качестве стандартного URL'a для файлов frontend'a
 	router.Static("/assets", "./public/assets")
+	// Парсинг html файлов шаблонов
 	router.LoadHTMLFiles(listTemplates("public/view")...)
 
-	// Main page with login panel
-	router.GET("/", h.LoginPage)
-	// Handler used for authorization
-	router.POST("/", h.SignIn)
+	// Инициализация менеджера сессий.
+	sessionStorage := memstore.NewStore([]byte(sessionKey))
+	router.Use(sessions.Sessions("session", sessionStorage))
 
-	schedule := router.Group("/schedule")
+	// Main page with login panel
+	router.GET("/", h.MainPage)
+
+	auth := router.Group("/auth")
+	{
+		auth.POST("/sign-in", h.SignIn)
+		auth.POST("/sign-out", h.SignOut)
+	}
+
+	schedule := router.Group("/schedule", h.userIdentity)
 	{
 		// Get schedule items
 		schedule.GET("/", h.GetAllScheduleItems)
